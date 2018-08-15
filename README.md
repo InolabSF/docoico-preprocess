@@ -15,6 +15,3 @@ $ pipenv install
 ```
 pipenv run python app.py
 ```
-
-
-## expand columns from image url
