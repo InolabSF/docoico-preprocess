@@ -136,6 +136,25 @@ for destination_list in destination_lists:
         address_components[key].append(value[key])
 for key, value in address_components.items():
     df_user_destination["Destination %s" % key] = pd.Series(address_components[key]).values
+        # by Os name, Browser name, Device name
+fields = ['Os name', 'Browser name', 'Device name']
+for field in fields:
+    lists = {}
+    columns = []
+    full_names = df_user[field].values
+    for full_name in full_names:
+        name = full_name.split('#')
+        if name not in columns:
+            columns.append(name[0])
+    for column in columns:
+        lists[column] = []
+        for full_name in full_names:
+            value = 0
+            if full_name.startswith(column):
+                value = 1
+            lists[column].append(value)
+    for column in columns:
+        df_user["%s %s" % (field, column)] = pd.Series(lists[column]).values
     # join
 df_user = pd.merge(df_user, df_user_destination_offset, on='User', how='outer')
 df_user = pd.merge(df_user, df_user_destination, on='User', how='outer')
