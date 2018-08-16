@@ -13,5 +13,6 @@ $ pipenv install
 ### execute
 
 ```
-pipenv run python app.py
+$ export GOOGLE_API_KEY=YOUR_API_KEY
+$ pipenv run python app.py
 ```
