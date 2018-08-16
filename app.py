@@ -95,5 +95,17 @@ for destination_id in destination_ids:
     # join
 df_user = pd.merge(df_user, df_user_destination_offset, on='User', how='outer')
 df_user = pd.merge(df_user, df_user_destination, on='User', how='outer')
+    # clean
+for destination_id in destination_ids:
+    df_user["Destination %s" % destination_id] = df_user["Destination %s" % destination_id].fillna(0).astype(int)
+columns = ['Offset index [User destination offset]', 'Round [User destination offset]', 'Start [User destination offset]', 'Offset [User destination offset]']
+for column in columns:
+    df_user[column] = df_user[column].replace(' - ', np.nan).fillna(0).astype(int)
+columns = ['User agent', 'Browser name', 'Device name', 'Os name']
+for column in columns:
+    df_user[column] = df_user[column].replace(' - ', '')
+columns = ['Destination [User destinations]', 'Created at [User destinations]', 'Updated at [User destinations]']
+for column in columns:
+    df_user[column] = df_user[column].fillna('[]')
     # save
 df_user.to_csv('./datas/user.csv', encoding='utf-8', index=False)
