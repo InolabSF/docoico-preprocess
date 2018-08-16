@@ -63,10 +63,8 @@ GOOGLE_API_KEY = os.environ['GOOGLE_API_KEY']
 df = pd.read_csv('./tables/destination.csv', sep=',')
 columns = df.columns.drop(['Subtitle', 'Desc', 'Category'])
 df_destination = df[columns]
-#df_destination['Prefecture']
     # save
 df_destination.to_csv('./datas/destination.csv', encoding='utf-8', index=False)
-
 
 # user
     # user
@@ -121,6 +119,23 @@ for destination_list in destination_lists:
         lists[destination_id].append(value)
 for destination_id in destination_ids:
     df_user_destination["Destination %s" % destination_id] = pd.Series(lists[destination_id]).values
+        # by destination address component
+        # https://developers.google.com/places/supported_types#table2
+address_components = {}
+for index, row in df_destination.iterrows():
+    address_components[row['administrative_area_level_1']] = []
+destination_lists = df_user_destination['Destination [User destinations]'].values
+for destination_list in destination_lists:
+    value = {}
+    for key, v in address_components.items():
+        value[key] = 0
+    for index, row in df_destination.iterrows():
+        if row['Id'] in destination_list:
+            value[row['administrative_area_level_1']] = value[row['administrative_area_level_1']] + 1
+    for key, v in address_components.items():
+        address_components[key].append(value[key])
+for key, value in address_components.items():
+    df_user_destination["Destination %s" % key] = pd.Series(address_components[key]).values
     # join
 df_user = pd.merge(df_user, df_user_destination_offset, on='User', how='outer')
 df_user = pd.merge(df_user, df_user_destination, on='User', how='outer')
@@ -136,5 +151,7 @@ for column in columns:
 columns = ['Destination [User destinations]', 'Created at [User destinations]', 'Updated at [User destinations]']
 for column in columns:
     df_user[column] = df_user[column].fillna('[]')
+for key, value in address_components.items():
+    df_user["Destination %s" % key] = df_user["Destination %s" % key].fillna(0).astype(int)
     # save
 df_user.to_csv('./datas/user.csv', encoding='utf-8', index=False)
