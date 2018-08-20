@@ -5,60 +5,6 @@ import urllib.request
 import json
 
 
-GOOGLE_API_KEY = os.environ['GOOGLE_API_KEY']
-
-
-## expand columns
-#    # by ip
-#df = pd.read_csv('./tables/user.csv', sep=',')
-#columns = ['Current sign in ip', 'Last sign in ip']
-#fields = ['country_code', 'country_name', 'city', 'postal', 'latitude', 'longitude', 'state']
-#for column in columns:
-#    lists = {}
-#    for field in fields:
-#        lists[field] = []
-#    for ip in df[column][::-1]:
-#        with urllib.request.urlopen("https://geoip-db.com/jsonp/%s" % ip) as url:
-#            data = json.loads(url.read().decode().split("(")[1].strip(")"))
-#            for field in fields:
-#                lists[field].append(data[field])
-#    for field in fields:
-#        df["%s [%s]" % (field, column)] = pd.Series(lists[field]).values
-#df.to_csv('./tables/user.csv', encoding='utf-8', index=False)
-
-
-## expand columns
-#    # by lat lng
-#df = pd.read_csv('./tables/destination.csv', sep=',')
-#addresses = []
-#for index, row in df.iterrows():
-#    list = {}
-#    with urllib.request.urlopen("https://maps.googleapis.com/maps/api/geocode/json?latlng=%s,%s&key=%s" % (row['Lat'], row['Lng'], GOOGLE_API_KEY)) as url:
-#        data = json.loads(url.read().decode())
-#        if data['status'] != 'OK':
-#            continue
-#        address_components = data['results'][0]['address_components']
-#        for address_component in address_components:
-#            types = address_component['types']
-#            for type in types:
-#                list[type] = address_component['long_name']
-#        addresses.append(list)
-#lists = {}
-#for address in addresses:
-#    for key, value in address.items():
-#        if (key in lists) == False:
-#            lists[key] = []
-#for address in addresses:
-#    for key, value in lists.items():
-#        if key in address:
-#            value.append(address[key])
-#        else:
-#            value.append('')
-#for key, value in lists.items():
-#    df[key] = pd.Series(value).values
-#df.to_csv('./tables/destination.csv', encoding='utf-8', index=False)
-
-
 # destination
 df = pd.read_csv('./tables/destination.csv', sep=',')
 columns = df.columns.drop(['Subtitle', 'Desc', 'Category'])
@@ -172,5 +118,33 @@ for column in columns:
     df_user[column] = df_user[column].fillna('[]')
 for key, value in address_components.items():
     df_user["Destination %s" % key] = df_user["Destination %s" % key].fillna(0).astype(int)
+    # expand columns by gcloud vision api detect-labels
+    # https://cloud.google.com/vision/docs/labels
+detect_labels  = {}
+lists = {}
+for key in df_destination:
+    if key.startswith('Gcloud detect-labels '):
+        detect_labels[key] = {}
+        lists[key] = []
+for index, row in df_destination.iterrows():
+    for key, value in detect_labels.items():
+        value = 0
+        if row[key] > 0:
+            value = 1
+        detect_labels[key][row['Id']] = value
+for index, row in df_user.iterrows():
+    values = {}
+    for key, value in detect_labels.items():
+        values[key] = 0
+    for destination_id in destination_ids:
+        if row["Destination %s" % destination_id] == 0:
+            continue
+        for key, value in detect_labels.items():
+            if value[destination_id] > 0:
+                values[key] = values[key] + 1
+    for key, value in values.items():
+        lists[key].append(value)
+for key, value in lists.items():
+    df_user[key] = pd.Series(value).values
     # save
 df_user.to_csv('./datas/user.csv', encoding='utf-8', index=False)

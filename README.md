@@ -2,6 +2,8 @@
 
 ### installation
 
+[install gcloud CLI](https://cloud.google.com/sdk/docs/quickstarts)
+
 python 3.6
 
 pipenv
@@ -14,5 +16,6 @@ $ pipenv install
 
 ```
 $ export GOOGLE_API_KEY=YOUR_API_KEY
+$ pipenv run python boosting_columns.py
 $ pipenv run python app.py
 ```
