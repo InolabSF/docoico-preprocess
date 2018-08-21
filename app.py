@@ -68,8 +68,15 @@ for destination_id in destination_ids:
         # by destination address component
         # https://developers.google.com/places/supported_types#table2
 address_components = {}
+total_address_components = {}
 for index, row in df_destination.iterrows():
     address_components[row['administrative_area_level_1']] = []
+for key, value in address_components.items():
+    total_address_components[key] = 0
+for index, row in df_destination.iterrows():
+    for key, value in total_address_components.items():
+        if row['administrative_area_level_1'] == key:
+            total_address_components[key] = total_address_components[key] + 1
 destination_lists = df_user_destination['Destination [User destinations]'].values
 for destination_list in destination_lists:
     value = {}
@@ -79,9 +86,9 @@ for destination_list in destination_lists:
         if row['Id'] in destination_list:
             value[row['administrative_area_level_1']] = value[row['administrative_area_level_1']] + 1
     for key, v in address_components.items():
-        address_components[key].append(value[key])
+        address_components[key].append(value[key] / total_address_components[key])
 for key, value in address_components.items():
-    df_user_destination["Destination %s" % key] = pd.Series(address_components[key]).values
+    df_user_destination["Probability [Destination %s] (total: %s)" % (key, total_address_components[key])] = pd.Series(address_components[key]).values
         # by Os name, Browser name, Device name
 fields = ['Os name', 'Browser name', 'Device name']
 for field in fields:
@@ -117,7 +124,8 @@ columns = ['Destination [User destinations]', 'Created at [User destinations]', 
 for column in columns:
     df_user[column] = df_user[column].fillna('[]')
 for key, value in address_components.items():
-    df_user["Destination %s" % key] = df_user["Destination %s" % key].fillna(0).astype(int)
+    k = "Probability [Destination %s] (total: %s)" % (key, total_address_components[key])
+    df_user[k] = df_user[k].fillna(0).astype(float)
     # expand columns by gcloud vision api detect-labels
     # https://cloud.google.com/vision/docs/labels
 detect_labels  = {}
@@ -132,6 +140,12 @@ for index, row in df_destination.iterrows():
         if row[key] > 0:
             value = 1
         detect_labels[key][row['Id']] = value
+total_detect_labels = {}
+for key, value in detect_labels.items():
+    total_detect_labels[key] = 0
+    for destination_id, flag in value.items():
+        if flag > 0:
+            total_detect_labels[key] = total_detect_labels[key] + 1
 for index, row in df_user.iterrows():
     values = {}
     for key, value in detect_labels.items():
@@ -143,8 +157,8 @@ for index, row in df_user.iterrows():
             if value[destination_id] > 0:
                 values[key] = values[key] + 1
     for key, value in values.items():
-        lists[key].append(value)
+        lists[key].append(value / total_detect_labels[key])
 for key, value in lists.items():
-    df_user[key] = pd.Series(value).values
+    df_user["Probability [%s] (total: %s)" % (key, total_detect_labels[key])] = pd.Series(value).values
     # save
 df_user.to_csv('./datas/user.csv', encoding='utf-8', index=False)
