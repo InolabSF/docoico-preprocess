@@ -86,9 +86,11 @@ for destination_list in destination_lists:
         if row['Id'] in destination_list:
             value[row['administrative_area_level_1']] = value[row['administrative_area_level_1']] + 1
     for key, v in address_components.items():
-        address_components[key].append(value[key] / total_address_components[key])
+        #address_components[key].append(value[key] / total_address_components[key])
+        address_components[key].append(value[key])
 for key, value in address_components.items():
-    df_user_destination["Probability [Destination %s] (total: %s)" % (key, total_address_components[key])] = pd.Series(address_components[key]).values
+    #df_user_destination["Probability [Destination %s] (total: %s)" % (key, total_address_components[key])] = pd.Series(address_components[key]).values
+    df_user_destination["Destination [%s] (total: %s)" % (key, total_address_components[key])] = pd.Series(address_components[key]).values
         # by Os name, Browser name, Device name
 fields = ['Os name', 'Browser name', 'Device name']
 for field in fields:
@@ -124,8 +126,10 @@ columns = ['Destination [User destinations]', 'Created at [User destinations]', 
 for column in columns:
     df_user[column] = df_user[column].fillna('[]')
 for key, value in address_components.items():
-    k = "Probability [Destination %s] (total: %s)" % (key, total_address_components[key])
-    df_user[k] = df_user[k].fillna(0).astype(float)
+    #k = "Probability [Destination %s] (total: %s)" % (key, total_address_components[key])
+    #df_user[k] = df_user[k].fillna(0).astype(float)
+    k = "Destination [%s] (total: %s)" % (key, total_address_components[key])
+    df_user[k] = df_user[k].fillna(0).astype(int)
     # expand columns by gcloud vision api detect-labels
     # https://cloud.google.com/vision/docs/labels
 detect_labels  = {}
@@ -157,8 +161,12 @@ for index, row in df_user.iterrows():
             if value[destination_id] > 0:
                 values[key] = values[key] + 1
     for key, value in values.items():
-        lists[key].append(value / total_detect_labels[key])
+        #lists[key].append(value / total_detect_labels[key])
+        lists[key].append(value)
 for key, value in lists.items():
-    df_user["Probability [%s] (total: %s)" % (key, total_detect_labels[key])] = pd.Series(value).values
+    #df_user["Probability [%s] (total: %s)" % (key, total_detect_labels[key])] = pd.Series(value).values
+    k = "%s (total: %s)" % (key, total_detect_labels[key])
+    df_user[k] = pd.Series(value).values
+    df_user[k] = df_user[k].fillna(0).astype(int)
     # save
 df_user.to_csv('./datas/user.csv', encoding='utf-8', index=False)
