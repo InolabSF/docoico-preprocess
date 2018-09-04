@@ -95,3 +95,4 @@ __pycache__
 *.pyc
 tables/*.csv
 datas/*.csv
+.ipynb_checkpoints/*
