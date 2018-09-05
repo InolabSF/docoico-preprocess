@@ -94,5 +94,6 @@ Thumbs.db
 __pycache__
 *.pyc
 tables/*.csv
+boosted/*.csv
 datas/*.csv
 .ipynb_checkpoints/*
