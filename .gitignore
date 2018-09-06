@@ -95,5 +95,5 @@ __pycache__
 *.pyc
 tables/*.csv
 boosted/*.csv
-datas/*.csv
+gaghiel/*.csv
 .ipynb_checkpoints/*
